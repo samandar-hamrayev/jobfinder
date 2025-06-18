@@ -105,4 +105,3 @@ Samandar Khamrayev — 2025
 GitHub: [https://github.com/samandar-hamrayev/](https://github.com/samandar-hamrayev/)
 
 ```
-
