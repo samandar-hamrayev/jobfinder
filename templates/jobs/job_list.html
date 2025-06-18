@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Jobs{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Filters Section -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-funnel me-2"></i> Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="filterForm">
+                        <div class="mb-3">
+                            <label for="search" class="form-label">Search</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="search" name="search" value="{{ request.GET.search|default_if_none:'' }}" placeholder="Job title, company...">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="job_type" class="form-label">Job Type</label>
+                            <select class="form-select" id="job_type" name="job_type">
+                                <option value="">All Types</option>
+                                <option value="full_time" {% if request.GET.job_type == 'full_time' %}selected{% endif %}>Full Time</option>
+                                <option value="part_time" {% if request.GET.job_type == 'part_time' %}selected{% endif %}>Part Time</option>
+                                <option value="contract" {% if request.GET.job_type == 'contract' %}selected{% endif %}>Contract</option>
+                                <option value="internship" {% if request.GET.job_type == 'internship' %}selected{% endif %}>Internship</option>
+                                <option value="temporary" {% if request.GET.job_type == 'temporary' %}selected{% endif %}>Temporary</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="" {% if not request.GET.category %}selected{% endif %}>Select a category</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sort" class="form-label">Sort By</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest First</option>
+                                <option value="oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" id="applyFilters">
+                            <i class="bi bi-funnel-fill me-2"></i> Apply Filters
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jobs List Section -->
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Available Jobs <span class="badge bg-primary rounded-pill">{{ jobs|length }}</span></h1>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'job_create' %}" class="btn btn-success" aria-label="Post a new job">
+                        <i class="bi bi-plus-circle me-2"></i> Post a Job
+                    </a>
+                {% endif %}
+            </div>
+
+            <div id="jobsContainer">
+                {% if jobs %}
+                    {% for job in jobs %}
+                        <div class="card job-card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h2 class="card-title">
+                                            <a href="{% url 'job_detail' job.pk %}" class="text-decoration-none text-dark">{{ job.title }}</a>
+                                        </h2>
+                                        <h6 class="card-subtitle mb-2 text-muted">{{ job.company }} • {{ job.get_job_type_display }}</h6>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-primary">{{ job.category.name }}</span>
+                                    </div>
+                                </div>
+                                <p class="card-text mt-2">{{ job.description|truncatewords:30 }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="text-muted">
+                                        <span><i class="bi bi-geo-alt me-1"></i> {{ job.location }}</span>
+                                        {% if job.salary %}
+                                            <span class="ms-2"><i class="bi bi-cash me-1"></i> {{ job.salary }}</span>
+                                        {% endif %}
+                                        <span class="ms-2"><i class="bi bi-calendar-date me-1"></i> Posted {{ job.posted_at|date:"M d, Y" }}</span>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-outline-info btn-sm me-2 quick-view-btn" data-bs-toggle="modal" data-bs-target="#quickViewModal" data-job-id="{{ job.pk }}" data-quick-view-url="{% url 'quick_view' job.pk %}" aria-label="Quick view job details">
+                                            <i class="bi bi-eye me-1"></i> Quick View
+                                        </button>
+                                        <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline-primary btn-sm" aria-label="View job details">
+                                            <i class="bi bi-arrow-right-circle me-1"></i> View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info">No jobs found matching your criteria.</div>
+                {% endif %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mt-4">
+                        {% with query_params=request.GET.urlencode %}
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if query_params %}&{{ query_params }}{% endif %}" aria-label="First page">« First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}" aria-label="Previous page">Previous</a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="?page={{ num }}{% if query_params %}&{{ query_params }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if query_params %}&{{ query_params }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}" aria-label="Next page">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query_params %}&{{ query_params }}{% endif %}" aria-label="Last page">Last »</a>
+                                </li>
+                            {% endif %}
+                        {% endwith %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-labelledby="quickViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickViewModalLabel">Job Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="quickViewContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Loading job details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" id="quickViewDetailsLink" class="btn btn-primary" aria-label="View full job details">View Full Details</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inline CSS -->
+<style>
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        padding: 15px 20px;
+    }
+    .job-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .job-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    .form-control, .form-select {
+        border-radius: 5px;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        font-size: 14px;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        outline: none;
+    }
+    .btn-primary {
+        transition: background-color 0.3s ease;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(45deg, #0056b3, #007bff);
+    }
+    .badge {
+        font-size: 0.85rem;
+        padding: 5px 10px;
+    }
+    @media (max-width: 768px) {
+        .job-card {
+            margin-bottom: 15px;
+        }
+        .form-label {
+            font-size: 0.9rem;
+        }
+        .form-control, .form-select {
+            padding: 8px 12px;
+        }
+    }
+</style>
+
+<!-- Inline JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Apply filters with loading animation
+        const filterForm = document.querySelector('#filterForm');
+        const applyFiltersBtn = document.querySelector('#applyFilters');
+        const spinner = applyFiltersBtn.querySelector('.spinner-border');
+
+        filterForm.addEventListener('submit', function() {
+            applyFiltersBtn.disabled = true;
+            spinner.classList.remove('d-none');
+        });
+
+        // Quick View functionality with AJAX
+        document.querySelectorAll('.quick-view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const quickViewUrl = this.getAttribute('data-quick-view-url'); // Dinamik URL
+                const modalBody = document.querySelector('#quickViewContent');
+                const detailsLink = document.querySelector('#quickViewDetailsLink');
+
+                // Show loading spinner
+                modalBody.innerHTML = `
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading job details...</p>
+                    </div>
+                `;
+
+                // AJAX request to fetch job details
+                fetch(quickViewUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        modalBody.innerHTML = `
+                            <h5>${data.title || 'No title'}</h5>
+                            <p><strong>Company:</strong> ${data.company || 'N/A'}</p>
+                            <p><strong>Type:</strong> ${data.job_type || 'N/A'}</p>
+                            <p><strong>Category:</strong> ${data.category || 'N/A'}</p>
+                            <p><strong>Description:</strong> ${data.description ? data.description.slice(0, 300) + (data.description.length > 300 ? '...' : '') : 'No description'}</p>
+                            <p><strong>Location:</strong> ${data.location || 'N/A'}</p>
+                            <p><strong>Salary:</strong> ${data.salary || 'Not specified'}</p>
+                            <p><strong>Posted:</strong> ${data.posted_at || 'N/A'}</p>
+                        `;
+                        detailsLink.href = `/jobs/${data.id}/`;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching job details:', error);
+                        modalBody.innerHTML = '<p class="text-danger">Failed to load job details. Please try again later or check your connection.</p>';
+                    });
+            });
+        });
+    });
+</script>
+{% endblock %}
