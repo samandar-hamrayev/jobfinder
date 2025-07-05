@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Django
+*.sqlite3
+*.sqlite
+db.sqlite3
+local_settings.py
+media/
+staticfiles/
+static_root/
+static_cdn/
+
+# Virtual Environments
+env/
+venv/
+ENV/
+.venv/
+.env/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Coverage / testing
+htmlcov/
+.coverage
+coverage.xml
+.tox/
+.nox/
+.pytest_cache/
+.cache/
+
+# Migrations (optional – agar versiyada saqlanmasa)
+*/migrations/__pycache__/
+*/migrations/*.py[cod]
+*/migrations/*.py~
+
+# dotenv
+.env
+.env.*
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Docker
+*.pid
+*.seed
+*.bak
+*.orig
+
+# JetBrains
+.idea/
+
+# pip tools
+requirements.txt
+Pipfile.lock
+
+# Redis dump files
+*.rdb
+
+# Other
+*.swp
+*.swo

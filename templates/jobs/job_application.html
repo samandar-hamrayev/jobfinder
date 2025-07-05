@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Apply for {{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-send"></i> Apply for: {{ job.title }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Job Details</h5>
+                        <div class="card bg-light p-3 mb-3">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6>{{ job.company }}</h6>
+                                    <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ job.location }}</p>
+                                    <p class="mb-1"><i class="bi bi-briefcase"></i> {{ job.get_job_type_display }}</p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-info">{{ job.category.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <!-- Cover Letter Field -->
+                        <div class="mb-3">
+                            <label for="{{ form.cover_letter.id_for_label }}" class="form-label">Cover Letter</label>
+                            {{ form.cover_letter }}
+                            <div class="form-text">Explain why you're a good fit for this position (500-1000 words).</div>
+                            {% if form.cover_letter.errors %}
+                                <div class="text-danger">{{ form.cover_letter.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Resume Field -->
+                        <div class="mb-4">
+                            <label for="{{ form.resume.id_for_label }}" class="form-label">Resume</label>
+                            {{ form.resume }}
+                            <div class="form-text">Upload your resume (PDF or DOCX, max 5MB).</div>
+                            {% if form.resume.errors %}
+                                <div class="text-danger">{{ form.resume.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Submit Application
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom CSS for application page */
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    textarea {
+        min-height: 200px;
+    }
+    .form-control, .form-select {
+        border-radius: 5px;
+        padding: 10px 15px;
+    }
+    .btn {
+        border-radius: 5px;
+        padding: 8px 20px;
+    }
+    .badge {
+        font-size: 0.9rem;
+        padding: 5px 10px;
+    }
+</style>
+
+<script>
+    // JavaScript for application form
+    document.addEventListener('DOMContentLoaded', function() {
+        // File input styling
+        const resumeInput = document.getElementById('id_resume');
+        if (resumeInput) {
+            resumeInput.addEventListener('change', function() {
+                const fileName = this.files[0]?.name || 'No file chosen';
+                const label = this.nextElementSibling?.querySelector('.form-text');
+                if (label) {
+                    label.textContent = `Selected: ${fileName}`;
+                }
+            });
+        }
+
+        // Character counter for cover letter
+        const coverLetter = document.getElementById('id_cover_letter');
+        if (coverLetter) {
+            const counter = document.createElement('div');
+            counter.className = 'form-text text-end';
+            coverLetter.parentNode.insertBefore(counter, coverLetter.nextSibling);
+
+            coverLetter.addEventListener('input', function() {
+                const count = this.value.length;
+                counter.textContent = `${count} characters (500-1000 recommended)`;
+
+                if (count < 500) {
+                    counter.classList.add('text-warning');
+                    counter.classList.remove('text-success');
+                } else if (count > 1000) {
+                    counter.classList.add('text-danger');
+                    counter.classList.remove('text-success');
+                } else {
+                    counter.classList.add('text-success');
+                    counter.classList.remove('text-warning', 'text-danger');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

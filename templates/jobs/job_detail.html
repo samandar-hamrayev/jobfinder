@@ -1,0 +1,428 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ job.title }} at {{ job.company }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Job Details Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">{{ job.title }}</h3>
+                    <h5 class="mb-0">{{ job.company }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="badge bg-secondary">{{ job.get_job_type_display }}</span>
+                        <span class="text-muted">Posted on {{ job.posted_at|date:"F d, Y" }}</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Job Description</h5>
+                        <p class="card-text" id="jobDescription">{{ job.description|linebreaks }}</p>
+                        <button class="btn btn-sm btn-outline-info mt-2" data-bs-toggle="modal" data-bs-target="#descriptionModal">
+                            <i class="bi bi-info-circle"></i> View Full Description
+                        </button>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Location</h5>
+                            <p><i class="bi bi-geo-alt"></i> {{ job.location }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Salary</h5>
+                            <p><i class="bi bi-cash"></i> {% if job.salary %}{{ job.salary }}{% else %}Negotiable{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Job Category</h5>
+                        <span class="badge bg-info">{{ job.category.name }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'job_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Jobs
+                        </a>
+
+                        {% if user.is_authenticated %}
+                            {% if user == job.posted_by %}
+                                <div>
+                                    <a href="{% url 'job_update' job.pk %}" class="btn btn-warning me-2">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <a href="{% url 'job_delete' job.pk %}" class="btn btn-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </a>
+                                </div>
+                            {% else %}
+                                {% if not has_applied %}
+                                    <a href="{% url 'job_apply' job.pk %}" class="btn btn-primary">
+                                        <i class="bi bi-send"></i> Apply Now
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-success" disabled>
+                                        <i class="bi bi-check-circle"></i> Already Applied
+                                    </button>
+                                {% endif %}
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'login' %}?next={% url 'job_detail' job.pk %}" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right"></i> Login to Apply
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Applicants Section (only visible to job poster) -->
+            {% if user == job.posted_by %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="bi bi-people"></i> Job Applicants
+                            <span class="badge bg-primary rounded-pill ms-2">
+                                {{ job.jobapplication_set.count }}
+                            </span>
+                        </span>
+                        <a href="{% url 'job_applicants' job.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-list"></i> View All
+                        </a>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if job.jobapplication_set.all %}
+                        <div class="list-group">
+                            {% for application in job.jobapplication_set.all|slice:":3" %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="d-flex align-items-center">
+                                        {% if application.applicant.profile.profile_picture %}
+                                        <img src="{{ application.applicant.profile.profile_picture.url }}"
+                                             class="rounded-circle me-3"
+                                             width="50"
+                                             height="50"
+                                             alt="Profile">
+                                        {% else %}
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                                             style="width: 50px; height: 50px;">
+                                            <i class="bi bi-person" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-1">
+                                                {% if application.applicant.profile.full_name %}
+                                                    {{ application.applicant.profile.full_name }}
+                                                {% else %}
+                                                    {{ application.applicant.email }}
+                                                {% endif %}
+                                            </h6>
+                                            <small class="text-muted">
+                                                Applied {{ application.applied_at|timesince }} ago
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                type="button"
+                                                data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                            <span class="badge bg-{{ application.get_status_display_class }}">
+                                                {{ application.get_status_display }}
+                                            </span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><h6 class="dropdown-header">Change Status</h6></li>
+                                            <li><a class="dropdown-item" href="{% url 'update_application_status' application.pk 'reviewed' %}">
+                                                <i class="bi bi-eye"></i> Mark as Reviewed
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="{% url 'update_application_status' application.pk 'interview' %}">
+                                                <i class="bi bi-calendar-check"></i> Invite to Interview
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-success" href="{% url 'update_application_status' application.pk 'hired' %}">
+                                                <i class="bi bi-check-circle"></i> Hire
+                                            </a></li>
+                                            <li><a class="dropdown-item text-danger" href="{% url 'update_application_status' application.pk 'rejected' %}">
+                                                <i class="bi bi-x-circle"></i> Reject
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="{{ application.resume.url }}" target="_blank">
+                                                <i class="bi bi-download"></i> Download Resume
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if job.jobapplication_set.count > 3 %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'job_applicants' job.pk %}" class="btn btn-outline-primary">
+                                View All {{ job.jobapplication_set.count }} Applicants
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-people" style="font-size: 2rem; color: #6c757d;"></i>
+                            <p class="mt-2 mb-0">No applicants yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Company Information Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">About {{ job.company }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text" id="companyInfo">{{ job.description|linebreaks }}</p> <!-- Using job description as placeholder -->
+                    <button class="btn btn-sm btn-outline-info mt-2" data-bs-toggle="modal" data-bs-target="#companyModal">
+                        <i class="bi bi-info-circle"></i> Learn More
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Posted By Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Posted By</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if job.posted_by.profile.profile_picture %}
+                            <img src="{{ job.posted_by.profile.profile_picture.url }}"
+                                 class="img-thumbnail rounded-circle mb-2"
+                                 style="width: 120px; height: 120px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-2"
+                                 style="width: 120px; height: 120px; margin: 0 auto;">
+                                <i class="bi bi-person" style="font-size: 3rem; color: #6c757d;"></i>
+                            </div>
+                        {% endif %}
+                        <h5>
+                            {% if job.posted_by.profile.full_name %}
+                                {{ job.posted_by.profile.full_name }}
+                            {% else %}
+                                {{ job.posted_by.email }}
+                            {% endif %}
+                        </h5>
+                        <p class="text-muted mb-1">{{ job.posted_by.email }}</p>
+                        <small class="text-muted">
+                            Member since {{ job.posted_by.date_joined|date:"F Y" }}
+                        </small>
+                    </div>
+
+                    <div class="border-top pt-3">
+                        {% if job.posted_by.profile.phone_number %}
+                            <div class="mb-2">
+                                <i class="bi bi-telephone"></i>
+                                <a href="tel:{{ job.posted_by.profile.phone_number }}">
+                                    {{ job.posted_by.profile.phone_number }}
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        {% if job.posted_by.profile.bio %}
+                            <div class="mb-3">
+                                <h6>About</h6>
+                                <p class="small">{{ job.posted_by.profile.bio }}</p>
+                            </div>
+                        {% endif %}
+
+                        {% if user.is_authenticated and user != job.posted_by %}
+                            <button class="btn btn-outline-primary w-100" id="contactBtn">
+                                <i class="bi bi-envelope"></i> Contact Employer
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Similar Jobs Section -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Similar Jobs</h5>
+                </div>
+                <div class="card-body">
+                    {% if similar_jobs %}
+                        <div class="row row-cols-1 g-3" id="similarJobsContainer">
+                            {% for similar_job in similar_jobs|slice:":6" %}
+                            <div class="col">
+                                <div class="card h-100 similar-job-card" style="transition: all 0.3s ease;">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <a href="{% url 'job_detail' similar_job.pk %}" class="text-decoration-none text-dark">
+                                                {{ similar_job.title }}
+                                            </a>
+                                        </h6>
+                                        <p class="card-text text-muted small">
+                                            {{ similar_job.company }} • {{ similar_job.location }}
+                                        </p>
+                                        <p class="card-text">
+                                            <span class="badge bg-secondary">{{ similar_job.get_job_type_display }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="card-footer bg-transparent border-0 text-center">
+                                        <a href="{% url 'job_detail' similar_job.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if similar_jobs|length > 6 %}
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary" id="loadMoreSimilarJobs">
+                                <i class="bi bi-plus-circle"></i> Load More
+                            </button>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">No similar jobs found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Job Description -->
+<div class="modal fade" id="descriptionModal" tabindex="-1" aria-labelledby="descriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="descriptionModalLabel">Job Description</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ job.description|linebreaks }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Company Information -->
+<div class="modal fade" id="companyModal" tabindex="-1" aria-labelledby="companyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="companyModalLabel">About {{ job.company }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>More information about the company would go here. This could be a description of the company, its mission, values, etc.</p>
+                <p>You can extend this section by adding a Company model to your database with more details.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom CSS for job detail page */
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        padding: 15px 20px;
+    }
+    .badge {
+        font-size: 0.85rem;
+        padding: 5px 10px;
+    }
+    .bi {
+        margin-right: 5px;
+    }
+    .btn {
+        border-radius: 5px;
+        padding: 8px 15px;
+    }
+    .img-thumbnail {
+        border: 3px solid #dee2e6;
+    }
+    .list-group-item {
+        border-radius: 8px !important;
+        margin-bottom: 10px;
+    }
+    .dropdown-menu {
+        min-width: 220px;
+    }
+    .similar-job-card {
+        border: none;
+    }
+    .similar-job-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    .row-cols-1 {
+        --bs-gutter-x: 1rem;
+    }
+    #similarJobsContainer .col {
+        transition: all 0.3s ease;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Contact employer button
+        const contactBtn = document.getElementById('contactBtn');
+        if (contactBtn) {
+            contactBtn.addEventListener('click', function() {
+                const email = "{{ job.posted_by.email }}";
+                const phone = "{{ job.posted_by.profile.phone_number|default:'Not provided' }}";
+                const name = "{{ job.posted_by.profile.full_name|default:job.posted_by.email }}";
+
+                const message = `Contact Information:\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}`;
+                alert(message);
+            });
+        }
+
+        // Apply button animation
+        const applyBtn = document.querySelector('.btn-primary');
+        if (applyBtn && applyBtn.textContent.includes('Apply Now')) {
+            applyBtn.addEventListener('mouseenter', function() {
+                this.innerHTML = '<i class="bi bi-send"></i> Ready to Apply?';
+            });
+            applyBtn.addEventListener('mouseleave', function() {
+                this.innerHTML = '<i class="bi bi-send"></i> Apply Now';
+            });
+        }
+
+        // Status change confirmation
+        document.querySelectorAll('.dropdown-item[href*="update_application_status"]').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (!confirm('Are you sure you want to change the application status?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Load more similar jobs (placeholder for future implementation)
+        const loadMoreBtn = document.getElementById('loadMoreSimilarJobs');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', function() {
+                alert('Load more functionality to be implemented.'); // Replace with AJAX call
+            });
+        }
+    });
+</script>
+{% endblock %}
