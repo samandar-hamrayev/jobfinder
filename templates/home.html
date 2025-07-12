@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}JobFinder - Find Your Dream Job{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="jumbotron mt-4">
+        <h1 class="display-4">Welcome to JobFinder!</h1>
+        <p class="lead">Find your dream job or post job opportunities.</p>
+        <hr class="my-4">
+        <p>Browse thousands of job listings or create an account to post jobs.</p>
+        <div class="mt-4">
+            <a class="btn btn-primary btn-lg me-2" href="{% url 'job_list' %}" role="button">Browse Jobs</a>
+            {% if not user.is_authenticated %}
+                <a class="btn btn-success btn-lg me-2" href="{% url 'register' %}" role="button">Register</a>
+                <a class="btn btn-outline-primary btn-lg" href="{% url 'login' %}" role="button">Login</a>
+            {% else %}
+                <a class="btn btn-success btn-lg" href="{% url 'job_create' %}" role="button">Post a Job</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-search"></i> Find Jobs</h5>
+                    <p class="card-text">Search through thousands of job listings to find your perfect match.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-briefcase"></i> Post Jobs</h5>
+                    <p class="card-text">Are you hiring? Post your job opportunities to reach qualified candidates.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-people"></i> Connect</h5>
+                    <p class="card-text">Connect with employers or job seekers to grow your network.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
