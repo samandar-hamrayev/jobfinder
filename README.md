@@ -26,7 +26,7 @@ Quyidagi buyruqlar orqali loyihani yuklab olib ishga tushiring:
 
 ### 1. Repozitoriyani klonlash
 ```bash
-git clone https://github.com/your-username/jobfinder.git
+git clone https://github.com/samandar-hamrayev/jobfinder
 cd jobfinder
 ````
 
