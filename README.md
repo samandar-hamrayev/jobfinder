@@ -1,61 +1,42 @@
-Mana siz so‘ragan **README.md** fayliga qisqa **loyiha tavsifi** va **clone qilib ishlatish bo‘yicha markdown ko‘rsatmalar** qo‘shilgan professional shakli:
+# JobFinder — Django Job Board
 
----
+A Django web application connecting job seekers and employers. Users can register, browse job listings, and submit applications.
 
-### 📄 `README.md`
+## Features
 
-````markdown
-# 🧰 JobFinder – Django asosidagi ish topish platformasi
+- User authentication (registration, login, logout)
+- Job listing creation and browsing
+- Application submission
+- HTML template-based frontend
+- Environment configuration via `.env`
 
-JobFinder — bu Django framework asosida qurilgan ochiq manbali web ilova bo‘lib, ish beruvchilar va ish izlovchilarni bog‘lashga xizmat qiladi. Foydalanuvchilar profil yaratib, ish e’lonlarini ko‘rishlari va ishga ariza yuborishlari mumkin.
+## Quick Start
 
----
+### 1. Clone
 
-## 🔥 Xususiyatlar
-
-- 👤 Foydalanuvchi autentifikatsiyasi (ro‘yxatdan o‘tish, login)
-- 💼 Ish e’lonlarini qo‘shish va ko‘rish
-- 📄 HTML shablonlar yordamida frontend
-- 🔒 Maxfiy sozlamalar `.env` orqali boshqariladi
-
----
-
-## 🚀 Loyihani ishga tushirish
-
-Quyidagi buyruqlar orqali loyihani yuklab olib ishga tushiring:
-
-### 1. Repozitoriyani klonlash
 ```bash
-git clone https://github.com/samandar-hamrayev/jobfinder
+git clone https://github.com/samandar-hamrayev/jobfinder.git
 cd jobfinder
-````
+```
 
-### 2. Virtual environment yaratish
+### 2. Create virtual environment
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # Mac/Linux
-venv\Scripts\activate     # Windows
-```
-
-### 3. Talablarni o‘rnatish
-
-```bash
+source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. `.env` faylini yaratish
+### 3. Configure `.env`
 
-`.env` faylni asosiy papkaga quyidagi formatda qo‘shing:
-
-```
-SECRET_KEY=django-insecure-XXXXXX
+```env
+SECRET_KEY=django-insecure-your-key-here
 DEBUG=True
 ALLOWED_HOSTS=127.0.0.1,localhost
 DATABASE_URL=sqlite:///db.sqlite3
 ```
 
-### 5. Migratsiyalar va serverni ishga tushirish
+### 4. Run migrations and start server
 
 ```bash
 python manage.py makemigrations
@@ -63,43 +44,35 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-👉 Web ilova manzili: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+Visit `http://127.0.0.1:8000`
 
----
-
-## 🧪 Superuser yaratish (admin panel uchun)
+## Admin Panel
 
 ```bash
 python manage.py createsuperuser
+# Visit http://127.0.0.1:8000/admin/
 ```
 
-Admin panel: [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)
-
----
-
-## 📂 Loyihaning qisqacha tuzilishi
+## Project Structure
 
 ```
 jobfinder/
-├── accounts/        # Foydalanuvchilar bilan bog‘liq app
-├── jobs/            # Ish e’lonlari app
-├── templates/       # HTML fayllar
-├── static/          # Statik fayllar (CSS, JS)
-├── media/           # Yuklangan fayllar
-├── .env             # Maxfiy sozlamalar
-├── manage.py        # Django boshqaruv fayli
-└── requirements.txt # Kutubxonalar ro‘yxati
+├── accounts/        # User authentication
+├── jobs/            # Job listings and applications
+├── templates/       # HTML templates
+├── static/          # CSS, JS assets
+├── media/           # Uploaded files
+├── .env             # Environment config
+├── manage.py
+└── requirements.txt
 ```
 
----
+## Tech Stack
 
-## 🤝 Litsenziya
+- Python 3.9+ · Django 4+
+- SQLite (default)
+- HTML/CSS templates
 
-Ushbu loyiha MIT litsenziyasi asosida tarqatiladi — istalgan maqsadda foydalanishingiz mumkin.
+## License
 
----
-
-## 👤 Muallif
-
-Samandar Khamrayev — 2025
-GitHub: [https://github.com/samandar-hamrayev/](https://github.com/samandar-hamrayev/)
+MIT — [Samandar Hamrayev](https://github.com/samandar-hamrayev)
